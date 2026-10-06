@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* ==================================================================
    FONTES LOCAIS (opcional) — cole aqui o stylesheet.css do Transfonter
@@ -162,11 +163,14 @@ button.primario{background:var(--ui-accent);color:var(--ui-onaccent);border-colo
 
   <div class="bloco">
     <span class="rotulo">Exportar</span>
+    <input id="nomePost" placeholder="Nome da pasta (ex.: post-03-cinco-perguntas)">
     <div class="linha">
       <button class="primario" onclick="baixarAtual()">Baixar este slide</button>
-      <button onclick="baixarTodos()">Baixar todos</button>
+      <button onclick="baixarTodos()">Baixar todos (.zip)</button>
+      <button id="btnPasta" onclick="salvarEmPasta()" style="display:none">Salvar em pasta…</button>
     </div>
-    <div class="dica" style="margin-top:10px">O navegador pode pedir permissão para baixar vários arquivos.</div>
+    <div class="dica" id="statusExport" style="margin-top:10px">
+      Todos os slides saem dentro de uma pasta. Vazio = marca + data.</div>
   </div>
 
   <div class="bloco">
@@ -511,15 +515,63 @@ function salvar(url, nome){
 }
 const nomeArq = i => `${marcaAtual}-${String(i+1).padStart(2,'0')}.png`;
 async function baixarAtual(){ salvar(await png(), nomeArq(atual)); }
+
+/* ---- exportação em lote: sempre dentro de uma pasta ---- */
+function nomePasta(){
+  const bruto = (document.getElementById('nomePost').value || '').trim();
+  const base = bruto || `${marcaAtual}-${new Date().toISOString().slice(0,10)}`;
+  return base.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+             .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'posts';
+}
+function status(msg){ document.getElementById('statusExport').textContent = msg; }
+
+async function gerarTodos(){
+  const voltar = atual, pasta = nomePasta(), arquivos = [];
+  try{
+    for(let i=0;i<slides.length;i++){
+      status(`Gerando ${i+1} de ${slides.length}…`);
+      irPara(i);
+      await new Promise(r=>setTimeout(r,140));
+      arquivos.push({nome:nomeArq(i), dataUrl: await png()});
+    }
+  } finally { irPara(voltar); }
+  return {pasta, arquivos};
+}
+
+/* ZIP: ao abrir, o Mac já cria a pasta com todas as imagens dentro */
 async function baixarTodos(){
-  const voltar = atual;
-  for(let i=0;i<slides.length;i++){
-    irPara(i);
-    await new Promise(r=>setTimeout(r,140));
-    salvar(await png(), nomeArq(i));
-    await new Promise(r=>setTimeout(r,320));
+  if(typeof JSZip === 'undefined'){
+    alert('A biblioteca de ZIP não carregou. Verifique a conexão e recarregue a página.'); return;
   }
-  irPara(voltar);
+  const {pasta, arquivos} = await gerarTodos();
+  const zip = new JSZip(), dir = zip.folder(pasta);
+  arquivos.forEach(a => dir.file(a.nome, a.dataUrl.split(',')[1], {base64:true}));
+  status('Compactando…');
+  const blob = await zip.generateAsync({type:'blob'});
+  const url = URL.createObjectURL(blob);
+  salvar(url, pasta + '.zip');
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  status(`Pronto: ${pasta}.zip com ${arquivos.length} imagens.`);
+}
+
+/* Pasta direta (Chrome/Edge): você escolhe onde, o arquivo já cai organizado */
+async function salvarEmPasta(){
+  if(!window.showDirectoryPicker){ alert('Este navegador não permite escolher pasta. Use o botão .zip.'); return; }
+  let raiz;
+  try{ raiz = await window.showDirectoryPicker({mode:'readwrite'}); }
+  catch(e){ return; }                      // cancelou
+  try{
+    const {pasta, arquivos} = await gerarTodos();
+    const dir = await raiz.getDirectoryHandle(pasta, {create:true});
+    for(const a of arquivos){
+      const blob = await (await fetch(a.dataUrl)).blob();
+      const f = await dir.getFileHandle(a.nome, {create:true});
+      const w = await f.createWritable(); await w.write(blob); await w.close();
+    }
+    status(`Salvo em ${raiz.name}/${pasta} (${arquivos.length} imagens).`);
+  }catch(e){
+    status('Não foi possível gravar nessa pasta. Escolha outra ou use o .zip.');
+  }
 }
 
 /* ==================================================================
@@ -549,6 +601,7 @@ function exportarJSON(){
    ================================================================== */
 try{ const sv = localStorage.getItem('studio_marca'); if(sv && MARCAS[sv]) marcaAtual = sv; }catch(e){}
 slides = JSON.parse(JSON.stringify(EXEMPLOS[marcaAtual] || EXEMPLOS.lastro));
+if(window.showDirectoryPicker) document.getElementById('btnPasta').style.display = '';
 document.fonts.ready.then(()=>{
   montarSeletorMarca(); montarAbas(); montarCampos(); render(); exportarMarcas();
 });
