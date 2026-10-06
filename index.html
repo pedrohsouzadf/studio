@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio · Gerador de posts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+/* ==================================================================
+   FONTES LOCAIS (opcional) — cole aqui o stylesheet.css do Transfonter
+   se quiser funcionar sem internet. Com o arquivo servido por http/https
+   as fontes do Google acima já bastam.
+   ================================================================== */
+
+
+
+/* ================== fim do bloco de fontes ======================== */
+
+/* ---------- interface ---------- */
+:root{ --ui-bg:#13161A; --ui-painel:#181C21; --ui-campo:#1F242B; --ui-borda:#2A313A;
+       --ui-text:#F2F4F6; --ui-muted:#8C98A6; --ui-accent:#39D353; --ui-onaccent:#0D1117; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--ui-bg);color:var(--ui-text);font-family:'Inter',system-ui,sans-serif;
+     display:flex;height:100vh;overflow:hidden}
+
+#painel{width:450px;flex-shrink:0;background:var(--ui-painel);border-right:1px solid var(--ui-borda);
+        overflow-y:auto;padding:24px}
+.topo{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.topo .logo{width:34px;height:34px;flex-shrink:0;display:block}
+.topo h1{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1}
+#painel .sub{font-size:12px;color:var(--ui-muted);margin:6px 0 20px}
+.bloco{border-top:1px solid var(--ui-borda);padding:18px 0}
+.rotulo{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ui-muted);
+        text-transform:uppercase;margin-bottom:10px;display:block}
+input,textarea,select{width:100%;background:var(--ui-campo);border:1px solid var(--ui-borda);
+  color:var(--ui-text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 11px;
+  border-radius:7px;margin-bottom:9px;outline:none;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--ui-accent)}
+textarea{min-height:80px;line-height:1.5}
+textarea.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
+button{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 14px;
+  border-radius:7px;border:1px solid var(--ui-borda);background:transparent;
+  color:var(--ui-text);cursor:pointer}
+button:hover{border-color:var(--ui-accent)}
+button.primario{background:var(--ui-accent);color:var(--ui-onaccent);border-color:var(--ui-accent)}
+.linha{display:flex;gap:8px;flex-wrap:wrap}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.aba{font-family:'JetBrains Mono',monospace;font-size:11px;min-width:36px;text-align:center;
+     padding:6px 9px;border:1px solid var(--ui-borda);border-radius:999px;cursor:pointer;color:var(--ui-muted)}
+.aba.ativa{border-color:var(--ui-accent);background:var(--ui-accent);color:var(--ui-onaccent)}
+.dica{font-size:11px;color:var(--ui-muted);line-height:1.5;margin-bottom:9px}
+#selMarca{border-color:var(--ui-accent);font-weight:600}
+.amostra{display:flex;gap:5px;margin:-2px 0 10px}
+.amostra i{width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.15)}
+
+#palco{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:32px;
+  background:repeating-conic-gradient(#0f1216 0% 25%, #0c0f12 0% 50%) 50%/24px 24px}
+#envoltorio{flex-shrink:0;transform-origin:top left}
+
+/* ---------- slide ---------- */
+.slide{position:relative;overflow:hidden;padding:96px 88px;display:flex;flex-direction:column;
+  background:var(--bg);color:var(--text);font-family:var(--f-texto)}
+
+.kicker{font-family:var(--f-texto);font-size:22px;font-weight:600;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:18px;margin-bottom:56px}
+.traco{width:44px;height:3px;border-radius:2px;background:var(--accent);flex-shrink:0}
+
+.titulo{font-family:var(--f-display);font-weight:var(--p-display);font-size:94px;
+  line-height:1.03;letter-spacing:-.025em}
+.titulo.menor{font-size:69px}
+.corpo{font-size:34px;line-height:1.5;color:var(--muted);margin-top:40px;max-width:90%}
+.centro{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:70px}
+
+.topicos{display:flex;flex-direction:column;margin-top:24px}
+.topico{display:flex;gap:28px;align-items:flex-start;padding:30px 0;border-top:1px solid var(--linha)}
+.topico:last-child{border-bottom:1px solid var(--linha)}
+.topico p{font-size:32px;line-height:1.38}
+.tag{font-size:19px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  width:var(--tag-w);flex-shrink:0;margin-top:3px;white-space:nowrap;color:var(--accent)}
+.tag.pill{border:2px solid var(--accent);border-radius:999px;padding:7px 18px;text-align:center}
+.tag.sev{font-family:var(--f-mono);font-size:20px;font-weight:600}
+.tag.sev.CRITICO{color:var(--alerta)}
+.tag.sev.ALTO{color:var(--atencao)}
+.tag.sev.MEDIO{color:var(--muted)}
+
+.numerao{font-family:var(--f-display);font-weight:var(--p-display);font-size:250px;line-height:.9;
+  letter-spacing:-.045em;color:var(--accent)}
+
+.lista{margin-top:30px}
+.lista div{font-size:36px;line-height:1.35;padding:26px 0;border-bottom:1px solid var(--linha)}
+.lista div:first-child{border-top:1px solid var(--linha)}
+
+.frase{font-family:var(--f-display);font-weight:var(--p-display);font-size:74px;
+  line-height:1.16;letter-spacing:-.02em}
+.aspas{font-family:var(--f-display);font-weight:var(--p-display);font-size:200px;line-height:.6;
+  color:var(--accent);height:90px;margin-bottom:10px}
+
+.botao-cta{display:block;width:fit-content;max-width:100%;white-space:nowrap;margin-top:56px;
+  font-family:var(--f-display);font-weight:var(--p-display);font-size:38px;line-height:1.2;
+  padding:26px 48px;border-radius:var(--raio-btn);background:var(--text);color:var(--bg)}
+
+.rodape{position:absolute;left:88px;right:88px;bottom:72px;display:flex;
+  justify-content:space-between;align-items:center}
+.rodape .num{font-family:var(--f-mono);font-size:21px;font-weight:600;letter-spacing:.14em;color:var(--muted)}
+.marca{display:flex;align-items:center;gap:14px;font-family:var(--f-display);
+  font-weight:var(--p-display);font-size:var(--wm-size);letter-spacing:var(--wm-track);line-height:1}
+.marca svg{width:46px;height:46px;display:block;flex-shrink:0}
+.marca .dominio{font-family:var(--f-texto);font-weight:600;font-size:24px;letter-spacing:.02em;
+  color:var(--muted);margin-left:6px}
+</style>
+</head>
+<body>
+
+<div id="painel">
+  <div class="topo"><span class="logo" id="logoPainel"></span><h1 id="nomePainel">Studio</h1></div>
+  <div class="sub" id="subPainel">Gerador de posts</div>
+
+  <div class="bloco" style="border-top:none;padding-top:0">
+    <span class="rotulo">Marca</span>
+    <select id="selMarca" onchange="trocarMarca(this.value)"></select>
+    <div class="amostra" id="amostra"></div>
+  </div>
+
+  <div class="bloco">
+    <span class="rotulo">Slides</span>
+    <div class="abas" id="abas"></div>
+    <div class="linha">
+      <button onclick="addSlide()">+ Slide</button>
+      <button onclick="dupSlide()">Duplicar</button>
+      <button onclick="delSlide()">Remover</button>
+    </div>
+  </div>
+
+  <div class="bloco">
+    <span class="rotulo">Tipo, tema e formato</span>
+    <select id="f_tipo" onchange="setCampo('tipo',this.value);montarCampos();render()">
+      <option value="capa">Capa</option>
+      <option value="texto">Texto</option>
+      <option value="topicos">Tópicos / achados</option>
+      <option value="dado">Dado / número</option>
+      <option value="lista">Lista</option>
+      <option value="frase">Frase / citação</option>
+      <option value="cta">Chamada final (CTA)</option>
+    </select>
+    <div class="dupla">
+      <select id="f_tema" onchange="setCampo('tema',this.value);render()"></select>
+      <select id="f_formato" onchange="setFormato(this.value)">
+        <option value="1080x1350">Feed 4:5 · 1080×1350</option>
+        <option value="1080x1080">Quadrado · 1080×1080</option>
+        <option value="1080x1920">Stories · 1080×1920</option>
+      </select>
+    </div>
+    <div class="dica">O tema vale para o slide atual; o formato, para todos.</div>
+  </div>
+
+  <div class="bloco" id="campos"></div>
+
+  <div class="bloco">
+    <span class="rotulo">Exportar</span>
+    <div class="linha">
+      <button class="primario" onclick="baixarAtual()">Baixar este slide</button>
+      <button onclick="baixarTodos()">Baixar todos</button>
+    </div>
+    <div class="dica" style="margin-top:10px">O navegador pode pedir permissão para baixar vários arquivos.</div>
+  </div>
+
+  <div class="bloco">
+    <span class="rotulo">Conteúdo em JSON</span>
+    <div class="dica">Array de slides. Cole e clique em Carregar.</div>
+    <textarea id="json" class="mono" style="min-height:110px"></textarea>
+    <div class="linha">
+      <button onclick="carregarJSON()">Carregar</button>
+      <button onclick="exportarJSON()">Exportar atual</button>
+    </div>
+  </div>
+
+  <div class="bloco">
+    <span class="rotulo">Marcas (JSON)</span>
+    <div class="dica">Edite para adicionar empresas. Exporte, duplique um bloco, ajuste e aplique.</div>
+    <textarea id="jsonMarcas" class="mono" style="min-height:110px"></textarea>
+    <div class="linha">
+      <button onclick="carregarMarcas()">Aplicar</button>
+      <button onclick="exportarMarcas()">Exportar marcas</button>
+    </div>
+  </div>
+</div>
+
+<div id="palco"><div id="envoltorio"><div id="slide" class="slide"></div></div></div>
+
+<script>
+/* ==================================================================
+   MARCAS
+   ================================================================== */
+const LOGO_LASTRO = `<svg viewBox="0 0 96 96" aria-hidden="true">
+  <rect x="8" y="54" width="80" height="16" rx="3" fill="var(--selo-fg)" opacity=".35"/>
+  <rect x="8" y="36" width="80" height="16" rx="3" fill="var(--selo-fg)" opacity=".6"/>
+  <rect x="8" y="18" width="80" height="16" rx="3" fill="var(--selo-bg)"/></svg>`;
+
+const LOGO_OIKOS = `<svg viewBox="0 0 96 96" aria-hidden="true">
+  <rect width="96" height="96" rx="15" fill="var(--selo-bg)"/>
+  <path d="M19 73L48 34L77 73" stroke="var(--selo-fg)" stroke-width="5" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="51" r="6" fill="var(--selo-fg)"/></svg>`;
+
+let MARCAS = {
+  lastro: {
+    nome:"LASTRO", sub:"Infraestrutura que sustenta o crescimento",
+    wordmark:"LASTRO", dominio:"lastro.cloud", logo: LOGO_LASTRO,
+    fontes:{ display:"'Space Grotesk', sans-serif", texto:"'Inter', sans-serif",
+             mono:"'JetBrains Mono', monospace", pesoDisplay:700 },
+    estilo:{ wordmarkSize:"26px", wordmarkTrack:".22em", raioBotao:"6px",
+             rotulo:"severidade", larguraRotulo:"150px", aspas:false },
+    uiAccent:"#39D353", uiOnAccent:"#0D1117",
+    temaPadrao:"base",
+    temas:{
+      base:    {rot:"Escuro",   bg:"#0D1117", text:"#F7F7F5", muted:"#8B98A5", accent:"#39D353",
+                linha:"#1F2933", seloBg:"#39D353", seloFg:"#F7F7F5", alerta:"#C0392B", atencao:"#E8A33D"},
+      destaque:{rot:"Verde",    bg:"#39D353", text:"#0D1117", muted:"rgba(13,17,23,.72)", accent:"#0D1117",
+                linha:"rgba(13,17,23,.22)", seloBg:"#0D1117", seloFg:"#39D353", alerta:"#7A1F15", atencao:"#6B4A12"},
+      claro:   {rot:"Claro",    bg:"#F7F7F5", text:"#0D1117", muted:"#6B7280", accent:"#1C8F3A",
+                linha:"#E2E5E8", seloBg:"#1C8F3A", seloFg:"#F7F7F5", alerta:"#A3281C", atencao:"#B07C2A"}
+    }
+  },
+
+  oikos: {
+    nome:"oikos", sub:"Onde a igreja mora",
+    wordmark:"oikos", dominio:"oikos.app.br", logo: LOGO_OIKOS,
+    fontes:{ display:"'Nunito Sans', sans-serif", texto:"'Inter', sans-serif",
+             mono:"'Inter', sans-serif", pesoDisplay:800 },
+    estilo:{ wordmarkSize:"40px", wordmarkTrack:"-.02em", raioBotao:"999px",
+             rotulo:"pill", larguraRotulo:"230px", aspas:true },
+    uiAccent:"#C6603D", uiOnAccent:"#FAF7F2",
+    temaPadrao:"creme",
+    temas:{
+      creme:     {rot:"Creme",     bg:"#FAF7F2", text:"#1C1B19", muted:"#6F6B65", accent:"#C6603D",
+                  linha:"#E4DFD5", seloBg:"#C6603D", seloFg:"#FAF7F2", alerta:"#A33225", atencao:"#B07C2A"},
+      terracota: {rot:"Terracota", bg:"#C6603D", text:"#FAF7F2", muted:"rgba(250,247,242,.88)", accent:"#FBE3B8",
+                  linha:"rgba(250,247,242,.32)", seloBg:"#FAF7F2", seloFg:"#C6603D", alerta:"#5E1C10", atencao:"#FBE3B8"},
+      escuro:    {rot:"Marrom",    bg:"#3D1A0E", text:"#FAF7F2", muted:"#CDBBAE", accent:"#E8A94C",
+                  linha:"rgba(250,247,242,.16)", seloBg:"#C6603D", seloFg:"#FAF7F2", alerta:"#E57A6A", atencao:"#E8A94C"},
+      dourado:   {rot:"Dourado",   bg:"#E8A94C", text:"#1C1B19", muted:"rgba(28,27,25,.72)", accent:"#8A3F26",
+                  linha:"rgba(28,27,25,.2)", seloBg:"#1C1B19", seloFg:"#E8A94C", alerta:"#8A3F26", atencao:"#5E4210"}
+    }
+  }
+};
+
+/* ==================================================================
+   ESTADO
+   ================================================================== */
+let marcaAtual = 'lastro';
+let formato = {w:1080, h:1350};
+let atual = 0;
+
+const EXEMPLOS = {
+  lastro: [
+    {tipo:'capa', tema:'base', kicker:'TEARDOWN 01',
+     titulo:'Um título\nque ocupa\nespaço.', corpo:'Linha de apoio curta explicando o contexto.'},
+    {tipo:'topicos', tema:'base', kicker:'O QUE APARECEU',
+     itens:'CRITICO | Primeiro achado crítico, em uma linha\nALTO | Segundo achado, severidade alta\nMEDIO | Terceiro achado, severidade média'},
+    {tipo:'cta', tema:'destaque', kicker:'PRÓXIMO PASSO',
+     titulo:'Chamada\nfinal aqui.', corpo:'Uma frase curta de fechamento.', cta:''}
+  ],
+  oikos: [
+    {tipo:'capa', tema:'creme', kicker:'oikos para igrejas',
+     titulo:'onde a igreja mora.', corpo:'Pessoas, grupos, discipulado e finanças em uma casa digital simples de usar.'},
+    {tipo:'topicos', tema:'creme', kicker:'o essencial',
+     titulo:'quatro pilares,\numa casa só.',
+     itens:'Comunhão | Grupos e vínculos com clareza, para que ninguém caminhe sozinho.\nDiscipulado | Relacionamentos de crescimento registrados e acompanhados.\nLiderança | Líderes acompanhados de perto, com passos simples.\nFinanças | Entradas e decisões organizadas para servir à confiança.'},
+    {tipo:'cta', tema:'dourado', kicker:'próximo passo',
+     titulo:'Comece pequeno.\nProve valor em 14 dias.',
+     corpo:'Cadastre sua igreja e acompanhe a comunidade com clareza.', cta:'criar conta grátis'}
+  ]
+};
+let slides = JSON.parse(JSON.stringify(EXEMPLOS.lastro));
+
+const CAMPOS = {
+  capa:    [['kicker','Kicker (topo)','input'],['titulo','Título','textarea'],['corpo','Apoio','textarea']],
+  texto:   [['kicker','Kicker','input'],['titulo','Título','textarea'],['corpo','Parágrafo','textarea']],
+  topicos: [['kicker','Kicker','input'],['titulo','Título (opcional)','textarea'],
+            ['itens','Um por linha — RÓTULO | texto','textarea-mono']],
+  dado:    [['kicker','Kicker','input'],['numero','Número','input'],
+            ['corpo','Descrição','textarea'],['fonte','Nota / fonte','input']],
+  lista:   [['kicker','Kicker','input'],['titulo','Título','textarea'],['itens','Um item por linha','textarea']],
+  frase:   [['kicker','Kicker','input'],['frase','Frase','textarea'],['corpo','Atribuição','input']],
+  cta:     [['kicker','Kicker','input'],['titulo','Título','textarea'],['corpo','Apoio','textarea'],
+            ['cta','Texto do botão (vazio = sem botão)','input'],['dominio','Domínio (vazio = padrão da marca)','input']]
+};
+
+const m = () => MARCAS[marcaAtual];
+const s = () => slides[atual];
+function setCampo(k,v){ s()[k]=v; }
+
+const escAttr = t => (t??'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const esc = t => (t??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const quebras = t => esc(t).replace(/\n/g,'<br>');
+
+/* ==================================================================
+   MARCA
+   ================================================================== */
+function montarSeletorMarca(){
+  document.getElementById('selMarca').innerHTML = Object.entries(MARCAS)
+    .map(([id,mk])=>`<option value="${id}" ${id===marcaAtual?'selected':''}>${escAttr(mk.nome)}</option>`).join('');
+  const mk = m();
+  document.getElementById('nomePainel').textContent = mk.nome;
+  document.getElementById('subPainel').textContent = mk.sub || 'Gerador de posts';
+  const t = mk.temas[mk.temaPadrao];
+  document.getElementById('logoPainel').innerHTML =
+    (mk.logo||'').replace(/var\(--selo-bg\)/g, t.seloBg).replace(/var\(--selo-fg\)/g, t.seloFg);
+  document.getElementById('amostra').innerHTML =
+    Object.values(mk.temas).map(x=>`<i style="background:${x.bg}"></i>`).join('') +
+    `<i style="background:${t.accent}"></i>`;
+  document.documentElement.style.setProperty('--ui-accent', mk.uiAccent || '#39D353');
+  document.documentElement.style.setProperty('--ui-onaccent', mk.uiOnAccent || '#0D1117');
+  montarSeletorTema();
+}
+function montarSeletorTema(){
+  const mk = m();
+  document.getElementById('f_tema').innerHTML = Object.entries(mk.temas)
+    .map(([id,t])=>`<option value="${id}">${escAttr(t.rot||id)}</option>`).join('');
+}
+function temaDoSlide(){
+  const mk = m();
+  return mk.temas[s().tema] || mk.temas[mk.temaPadrao];
+}
+function aplicarMarca(){
+  const mk = m(), t = temaDoSlide(), f = mk.fontes, e = mk.estilo || {};
+  const el = document.getElementById('slide'), st = el.style;
+  st.setProperty('--bg', t.bg);          st.setProperty('--text', t.text);
+  st.setProperty('--muted', t.muted);    st.setProperty('--accent', t.accent);
+  st.setProperty('--linha', t.linha);    st.setProperty('--selo-bg', t.seloBg);
+  st.setProperty('--selo-fg', t.seloFg); st.setProperty('--alerta', t.alerta || t.accent);
+  st.setProperty('--atencao', t.atencao || t.accent);
+  st.setProperty('--f-display', f.display); st.setProperty('--f-texto', f.texto);
+  st.setProperty('--f-mono', f.mono || f.texto);
+  st.setProperty('--p-display', f.pesoDisplay || 700);
+  st.setProperty('--wm-size', e.wordmarkSize || '30px');
+  st.setProperty('--wm-track', e.wordmarkTrack || '0');
+  st.setProperty('--raio-btn', e.raioBotao || '8px');
+  st.setProperty('--tag-w', e.larguraRotulo || '180px');
+}
+function trocarMarca(id){
+  marcaAtual = id;
+  try{ localStorage.setItem('studio_marca', id); }catch(e){}
+  const mk = m();
+  slides.forEach(sl => { if(!mk.temas[sl.tema]) sl.tema = mk.temaPadrao; });
+  montarSeletorMarca(); montarCampos(); render();
+}
+function carregarMarcas(){
+  try{
+    const d = JSON.parse(document.getElementById('jsonMarcas').value);
+    if(typeof d!=='object' || !Object.keys(d).length) throw 0;
+    MARCAS = d;
+    if(!MARCAS[marcaAtual]) marcaAtual = Object.keys(MARCAS)[0];
+    trocarMarca(marcaAtual);
+  }catch(e){ alert('JSON de marcas inválido.'); }
+}
+function exportarMarcas(){
+  document.getElementById('jsonMarcas').value = JSON.stringify(MARCAS, null, 2);
+}
+
+/* ==================================================================
+   PAINEL
+   ================================================================== */
+function montarCampos(){
+  const box = document.getElementById('campos');
+  const lista = CAMPOS[s().tipo] || [];
+  box.innerHTML = '<span class="rotulo">Conteúdo</span>' + lista.map(([k,lab,tipo])=>{
+    if(tipo==='input')
+      return `<input placeholder="${escAttr(lab)}" value="${escAttr(s()[k])}" oninput="setCampo('${k}',this.value);render()">`;
+    const cls = tipo==='textarea-mono' ? 'mono' : '';
+    return `<div class="dica">${esc(lab)}</div><textarea class="${cls}" oninput="setCampo('${k}',this.value);render()">${esc(s()[k])}</textarea>`;
+  }).join('');
+  document.getElementById('f_tipo').value = s().tipo;
+  document.getElementById('f_tema').value = s().tema || m().temaPadrao;
+}
+function montarAbas(){
+  document.getElementById('abas').innerHTML = slides.map((sl,i)=>
+    `<div class="aba ${i===atual?'ativa':''}" onclick="irPara(${i})">${String(i+1).padStart(2,'0')}</div>`).join('');
+}
+function irPara(i){ atual=i; montarAbas(); montarCampos(); render(); }
+function addSlide(){ slides.push({tipo:'texto',tema:m().temaPadrao,kicker:'',titulo:'',corpo:''}); irPara(slides.length-1); }
+function dupSlide(){ slides.splice(atual+1,0,JSON.parse(JSON.stringify(s()))); irPara(atual+1); }
+function delSlide(){ if(slides.length<2) return; slides.splice(atual,1); irPara(Math.max(0,atual-1)); }
+function setFormato(v){ const [w,h]=v.split('x').map(Number); formato={w,h}; render(); }
+
+/* ==================================================================
+   RENDER
+   ================================================================== */
+function corpoHTML(sl){
+  const mk = m(), e = mk.estilo || {};
+  const kicker = sl.kicker ? `<div class="kicker"><span class="traco"></span>${esc(sl.kicker)}</div>` : '';
+  let meio = '';
+
+  if(sl.tipo==='capa' || sl.tipo==='texto' || sl.tipo==='cta'){
+    const cls = sl.tipo==='texto' ? 'titulo menor' : 'titulo';
+    meio = `<div class="centro"><div class="${cls}">${quebras(sl.titulo)}</div>
+      ${sl.corpo?`<div class="corpo">${quebras(sl.corpo)}</div>`:''}
+      ${sl.tipo==='cta' && sl.cta?`<div class="botao-cta">${esc(sl.cta)}</div>`:''}</div>`;
+  }
+
+  if(sl.tipo==='topicos'){
+    const sev = (e.rotulo === 'severidade');
+    const linhas = (sl.itens||'').split('\n').filter(Boolean).map(l=>{
+      const i = l.indexOf('|');
+      const a = (i>=0 ? l.slice(0,i) : '').trim();
+      const b = (i>=0 ? l.slice(i+1) : l).trim();
+      const chave = a.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const cls = sev ? `tag sev ${chave}` : 'tag pill';
+      return `<div class="topico"><div class="${cls}">${esc(sev?chave:a)}</div><p>${esc(b)}</p></div>`;
+    }).join('');
+    meio = `<div class="centro">${sl.titulo?`<div class="titulo menor" style="margin-bottom:18px">${quebras(sl.titulo)}</div>`:''}
+      <div class="topicos">${linhas}</div></div>`;
+  }
+
+  if(sl.tipo==='dado'){
+    meio = `<div class="centro"><div class="numerao">${esc(sl.numero)}</div>
+      <div class="corpo" style="margin-top:44px;font-size:42px;color:var(--text)">${quebras(sl.corpo)}</div>
+      ${sl.fonte?`<div class="corpo" style="font-size:26px;margin-top:26px">${esc(sl.fonte)}</div>`:''}</div>`;
+  }
+
+  if(sl.tipo==='lista'){
+    const itens = (sl.itens||'').split('\n').filter(Boolean).map(i=>`<div>${esc(i)}</div>`).join('');
+    meio = `<div class="centro">${sl.titulo?`<div class="titulo menor">${quebras(sl.titulo)}</div>`:''}
+      <div class="lista">${itens}</div></div>`;
+  }
+
+  if(sl.tipo==='frase'){
+    meio = `<div class="centro">${e.aspas?'<div class="aspas">&ldquo;</div>':''}
+      <div class="frase">${quebras(sl.frase)}</div>
+      ${sl.corpo?`<div class="corpo" style="font-size:28px;margin-top:46px">${esc(sl.corpo)}</div>`:''}</div>`;
+  }
+
+  const dom = sl.tipo==='cta' ? (sl.dominio || mk.dominio) : '';
+  const rodape = `<div class="rodape">
+      <span class="num">${String(slides.indexOf(sl)+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}</span>
+      <div class="marca">${mk.logo||''}${esc(mk.wordmark)}${dom?`<span class="dominio">${esc(dom)}</span>`:''}</div>
+    </div>`;
+
+  return kicker + meio + rodape;
+}
+
+function render(){
+  const el = document.getElementById('slide');
+  aplicarMarca();
+  el.style.width = formato.w+'px';
+  el.style.height = formato.h+'px';
+  el.innerHTML = corpoHTML(s());
+  ajustarZoom();
+}
+function ajustarZoom(){
+  const palco = document.getElementById('palco');
+  const escala = Math.max(.1, Math.min((palco.clientHeight-64)/formato.h, (palco.clientWidth-64)/formato.w));
+  const w = document.getElementById('envoltorio');
+  w.style.transform = `scale(${escala})`;
+  w.style.width = (formato.w*escala)+'px';
+  w.style.height = (formato.h*escala)+'px';
+}
+window.addEventListener('resize', ajustarZoom);
+
+/* ==================================================================
+   EXPORTAÇÃO
+   ================================================================== */
+let fontCSS = null;
+function fontesLocais(){
+  let css = '';
+  for(const folha of document.styleSheets){
+    try{ for(const r of folha.cssRules) if(r instanceof CSSFontFaceRule) css += r.cssText + '\n'; }
+    catch(e){}
+  }
+  return css;
+}
+async function obterFontes(no){
+  if(fontCSS !== null) return fontCSS;
+  let css = '';
+  try{ css = await htmlToImage.getFontEmbedCSS(no); }catch(e){ css = ''; }
+  if(!css || css.length < 200) css = fontesLocais();   // fallback
+  fontCSS = css;
+  return css;
+}
+async function png(){
+  const no = document.getElementById('slide');
+  const env = document.getElementById('envoltorio');
+  const antes = env.style.transform;
+  env.style.transform = 'scale(1)';
+  await document.fonts.ready;
+  await new Promise(r=>setTimeout(r,80));
+  try{
+    return await htmlToImage.toPng(no, {
+      width:formato.w, height:formato.h, pixelRatio:1,
+      fontEmbedCSS: await obterFontes(no), cacheBust:true
+    });
+  } finally { env.style.transform = antes; }
+}
+function salvar(url, nome){
+  const a = document.createElement('a'); a.href=url; a.download=nome; a.click();
+}
+const nomeArq = i => `${marcaAtual}-${String(i+1).padStart(2,'0')}.png`;
+async function baixarAtual(){ salvar(await png(), nomeArq(atual)); }
+async function baixarTodos(){
+  const voltar = atual;
+  for(let i=0;i<slides.length;i++){
+    irPara(i);
+    await new Promise(r=>setTimeout(r,140));
+    salvar(await png(), nomeArq(i));
+    await new Promise(r=>setTimeout(r,320));
+  }
+  irPara(voltar);
+}
+
+/* ==================================================================
+   JSON DE CONTEÚDO
+   ================================================================== */
+const LEGADO_TIPO = {achados:'topicos'};
+function carregarJSON(){
+  try{
+    const d = JSON.parse(document.getElementById('json').value);
+    if(!Array.isArray(d) || !d.length) throw 0;
+    const mk = m();
+    d.forEach(x=>{
+      x.tipo = LEGADO_TIPO[x.tipo] || x.tipo;
+      if(x.tema === 'dark')  x.tema = mk.temas.base ? 'base' : mk.temaPadrao;
+      if(x.tema === 'verde') x.tema = mk.temas.destaque ? 'destaque' : mk.temaPadrao;
+      if(!mk.temas[x.tema]) x.tema = mk.temaPadrao;
+    });
+    slides = d; irPara(0);
+  }catch(e){ alert('JSON inválido. Precisa ser um array de slides.'); }
+}
+function exportarJSON(){
+  document.getElementById('json').value = JSON.stringify(slides, null, 2);
+}
+
+/* ==================================================================
+   START
+   ================================================================== */
+try{ const sv = localStorage.getItem('studio_marca'); if(sv && MARCAS[sv]) marcaAtual = sv; }catch(e){}
+slides = JSON.parse(JSON.stringify(EXEMPLOS[marcaAtual] || EXEMPLOS.lastro));
+document.fonts.ready.then(()=>{
+  montarSeletorMarca(); montarAbas(); montarCampos(); render(); exportarMarcas();
+});
+</script>
+</body>
+</html>
