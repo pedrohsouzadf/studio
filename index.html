@@ -197,9 +197,9 @@ button.primario{background:var(--ui-accent);color:var(--ui-onaccent);border-colo
    MARCAS
    ================================================================== */
 const LOGO_LASTRO = `<svg viewBox="0 0 96 96" aria-hidden="true">
-  <rect x="8" y="54" width="80" height="16" rx="3" fill="var(--selo-fg)" opacity=".35"/>
-  <rect x="8" y="36" width="80" height="16" rx="3" fill="var(--selo-fg)" opacity=".6"/>
-  <rect x="8" y="18" width="80" height="16" rx="3" fill="var(--selo-bg)"/></svg>`;
+  <path d="M48 50L88 68L48 86L8 68Z" fill="var(--selo-3)" stroke="var(--selo-3)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M48 30L88 48L48 66L8 48Z" fill="var(--selo-2)" stroke="var(--selo-2)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M48 10L88 28L48 46L8 28Z" fill="var(--selo-1)" stroke="var(--selo-1)" stroke-width="2" stroke-linejoin="round"/></svg>`;
 
 const LOGO_OIKOS = `<svg viewBox="0 0 96 96" aria-hidden="true">
   <rect width="96" height="96" rx="15" fill="var(--selo-bg)"/>
@@ -219,11 +219,14 @@ let MARCAS = {
     temaPadrao:"base",
     temas:{
       base:    {rot:"Escuro",   bg:"#0D1117", text:"#F7F7F5", muted:"#8B98A5", accent:"#39D353",
-                linha:"#1F2933", seloBg:"#39D353", seloFg:"#F7F7F5", alerta:"#C0392B", atencao:"#E8A33D"},
+                linha:"#1F2933", seloBg:"#39D353", seloFg:"#F7F7F5",
+                selo1:"#39D353", selo2:"#C9CED4", selo3:"#5B6470", alerta:"#C0392B", atencao:"#E8A33D"},
       destaque:{rot:"Verde",    bg:"#39D353", text:"#0D1117", muted:"rgba(13,17,23,.72)", accent:"#0D1117",
-                linha:"rgba(13,17,23,.22)", seloBg:"#0D1117", seloFg:"#39D353", alerta:"#7A1F15", atencao:"#6B4A12"},
+                linha:"rgba(13,17,23,.22)", seloBg:"#0D1117", seloFg:"#39D353",
+                selo1:"#0D1117", selo2:"#1E5B2E", selo3:"#2A913F", alerta:"#7A1F15", atencao:"#6B4A12"},
       claro:   {rot:"Claro",    bg:"#F7F7F5", text:"#0D1117", muted:"#6B7280", accent:"#1C8F3A",
-                linha:"#E2E5E8", seloBg:"#1C8F3A", seloFg:"#F7F7F5", alerta:"#A3281C", atencao:"#B07C2A"}
+                linha:"#E2E5E8", seloBg:"#1C8F3A", seloFg:"#F7F7F5",
+                selo1:"#1C8F3A", selo2:"#9AA3AD", selo3:"#5B6470", alerta:"#A3281C", atencao:"#B07C2A"}
     }
   },
 
@@ -310,7 +313,11 @@ function montarSeletorMarca(){
   document.getElementById('subPainel').textContent = mk.sub || 'Gerador de posts';
   const t = mk.temas[mk.temaPadrao];
   document.getElementById('logoPainel').innerHTML =
-    (mk.logo||'').replace(/var\(--selo-bg\)/g, t.seloBg).replace(/var\(--selo-fg\)/g, t.seloFg);
+    (mk.logo||'')
+      .replace(/var\(--selo-bg\)/g, t.seloBg).replace(/var\(--selo-fg\)/g, t.seloFg)
+      .replace(/var\(--selo-1\)/g, t.selo1 || t.seloBg)
+      .replace(/var\(--selo-2\)/g, t.selo2 || t.seloFg)
+      .replace(/var\(--selo-3\)/g, t.selo3 || t.seloFg);
   document.getElementById('amostra').innerHTML =
     Object.values(mk.temas).map(x=>`<i style="background:${x.bg}"></i>`).join('') +
     `<i style="background:${t.accent}"></i>`;
@@ -334,6 +341,9 @@ function aplicarMarca(){
   st.setProperty('--muted', t.muted);    st.setProperty('--accent', t.accent);
   st.setProperty('--linha', t.linha);    st.setProperty('--selo-bg', t.seloBg);
   st.setProperty('--selo-fg', t.seloFg); st.setProperty('--alerta', t.alerta || t.accent);
+  st.setProperty('--selo-1', t.selo1 || t.seloBg);
+  st.setProperty('--selo-2', t.selo2 || t.seloFg);
+  st.setProperty('--selo-3', t.selo3 || t.seloFg);
   st.setProperty('--atencao', t.atencao || t.accent);
   st.setProperty('--f-display', f.display); st.setProperty('--f-texto', f.texto);
   st.setProperty('--f-mono', f.mono || f.texto);
